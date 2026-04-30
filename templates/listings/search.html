@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if query %}{{ query }} — {% endif %}Search — find.ng{% endblock %}
+
+{% block body %}
+<div class="pb-[72px] md:pb-0">
+
+<!-- Navbar -->
+<nav class="sticky top-0 z-50 bg-surface border-b border-white/[0.07] backdrop-blur-md">
+  <div class="flex items-center gap-3 max-w-[1200px] mx-auto px-4 h-[60px]">
+    <a href="{% url 'home' %}" class="flex items-center gap-1.5 text-[1.1rem] font-bold tracking-tight flex-shrink-0">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="10" cy="10" r="6.5" stroke="#1D9E75" stroke-width="1.8"/>
+        <circle cx="10" cy="10" r="2.2" fill="#1D9E75"/>
+        <line x1="14.8" y1="14.8" x2="20" y2="20" stroke="#1D9E75" stroke-width="2.2" stroke-linecap="round"/>
+      </svg>
+      <span class="text-t1">find<span class="text-teal">.ng</span></span>
+    </a>
+
+    <!-- Search bar in nav -->
+    <form action="{% url 'search' %}" method="get" class="flex-1 flex items-center gap-2 bg-card border border-white/[0.07] rounded-xl px-3.5 max-w-[520px]">
+      <svg class="text-t3 flex-shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="10" cy="10" r="7"/><line x1="15.5" y1="15.5" x2="21" y2="21"/>
+      </svg>
+      <input
+        type="search"
+        name="q"
+        value="{{ query }}"
+        placeholder="Search businesses, areas, categories…"
+        autofocus
+        class="flex-1 bg-transparent border-none outline-none text-t1 text-[0.9rem] py-2.5 placeholder:text-t3"
+      >
+      {% if query %}
+      <a href="{% url 'search' %}" class="text-t3 hover:text-t1 transition-colors flex-shrink-0">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </a>
+      {% endif %}
+    </form>
+
+    <div class="flex-1 hidden md:block"></div>
+    {% if request.user.is_authenticated %}
+    <a href="{% url 'account' %}" class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/[0.09] bg-[#1a1d27] hover:opacity-85 transition-opacity flex-shrink-0">
+      <div class="w-5 h-5 rounded-full bg-teal/20 flex items-center justify-center">
+        <span class="text-[10px] font-semibold text-teal">{{ request.user.full_name|slice:":1"|upper }}</span>
+      </div>
+      <span class="text-[13px] font-medium text-t2">{{ request.user.full_name|truncatechars:12 }}</span>
+    </a>
+    {% else %}
+    <a href="{% url 'login' %}" class="px-3.5 py-1.5 rounded-lg border border-amber/50 bg-[#1a1d27] text-amber-light text-[13px] font-medium hover:opacity-85 transition-opacity flex-shrink-0">Sign in</a>
+    {% endif %}
+  </div>
+</nav>
+
+<!-- Results area -->
+<div class="max-w-[860px] mx-auto px-4 py-7 md:px-6 md:py-9">
+
+  {% if not searched %}
+  <!-- Empty landing — no query yet -->
+  <div class="text-center py-20">
+    <div class="w-16 h-16 rounded-2xl bg-card border border-white/[0.07] flex items-center justify-center mx-auto mb-5">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6b7080" stroke-width="1.5" stroke-linecap="round">
+        <circle cx="10" cy="10" r="7"/><line x1="15.5" y1="15.5" x2="21" y2="21"/>
+      </svg>
+    </div>
+    <p class="text-[1.1rem] font-semibold text-t1 mb-2">Search Bonny Island</p>
+    <p class="text-[0.9rem] text-t3 max-w-[300px] mx-auto">Find hotels, restaurants, bukkas, bars, shops and recreational places near you.</p>
+  </div>
+
+  {% elif count == 0 %}
+  <!-- No results -->
+  <div class="mb-5">
+    <p class="text-[0.82rem] text-t3 uppercase tracking-wider font-semibold mb-1">Search results</p>
+    <h1 class="text-[1.3rem] font-bold text-t1">No results for "<span class="text-teal">{{ query }}</span>"</h1>
+  </div>
+  <div class="text-center py-14 border border-dashed border-white/[0.1] rounded-2xl">
+    <div class="w-14 h-14 rounded-2xl bg-card border border-white/[0.07] flex items-center justify-center mx-auto mb-4">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6b7080" stroke-width="1.5" stroke-linecap="round">
+        <circle cx="10" cy="10" r="7"/><line x1="15.5" y1="15.5" x2="21" y2="21"/>
+      </svg>
+    </div>
+    <p class="text-[0.95rem] font-medium text-t1 mb-1.5">Nothing found</p>
+    <p class="text-[0.88rem] text-t3 max-w-[280px] mx-auto mb-5">Try a different name, area, or category. Bonny Island listings are growing — check back soon.</p>
+    <a href="{% url 'listing_list' %}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-teal text-[#04342C] text-[0.88rem] font-semibold hover:opacity-90 transition-opacity">
+      Browse all listings
+    </a>
+  </div>
+
+  {% else %}
+  <!-- Results found -->
+  <div class="flex items-baseline justify-between mb-5">
+    <div>
+      <p class="text-[0.82rem] text-t3 uppercase tracking-wider font-semibold mb-0.5">Search results</p>
+      <h1 class="text-[1.3rem] font-bold text-t1">
+        {{ count }} result{{ count|pluralize }} for "<span class="text-teal">{{ query }}</span>"
+      </h1>
+    </div>
+    <a href="{% url 'listing_list' %}" class="text-[0.88rem] text-teal hover:underline flex-shrink-0">Browse all</a>
+  </div>
+
+  <div class="flex flex-col gap-3">
+    {% for listing in results %}
+    <a href="{% url 'listing_detail' listing.slug %}" class="flex items-center gap-4 bg-card border border-white/[0.07] rounded-xl px-4 py-3.5 hover:border-white/[0.14] transition-colors group">
+
+      <!-- Thumbnail -->
+      <div class="w-[64px] h-[64px] rounded-[10px] overflow-hidden flex-shrink-0 bg-[#0d0f18]">
+        {% with listing.photos.first as photo %}
+          {% if photo %}
+            <img src="{{ photo.image.url }}" alt="{{ listing.name }}" class="w-full h-full object-cover">
+          {% else %}
+            <div class="w-full h-full flex items-center justify-center text-[1.6rem]">
+              {% if listing.category == 'hotel' %}🏨
+              {% elif listing.category == 'restaurant' %}🍽
+              {% elif listing.category == 'bukka' %}🍲
+              {% elif listing.category == 'bar' %}🍺
+              {% elif listing.category == 'shop' %}🛍
+              {% elif listing.category == 'recreation' %}🎯
+              {% else %}📍{% endif %}
+            </div>
+          {% endif %}
+        {% endwith %}
+      </div>
+
+      <!-- Info -->
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 flex-wrap mb-0.5">
+          <span class="text-[1rem] font-semibold text-t1 group-hover:text-teal transition-colors truncate">{{ listing.name }}</span>
+          {% if listing.is_verified %}
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber/15 border border-amber/30 text-amber-light text-[0.72rem] font-semibold flex-shrink-0">
+            <svg width="7" height="7" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#FAC775" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Verified
+          </span>
+          {% endif %}
+        </div>
+        <p class="text-[0.85rem] text-t3 truncate">{{ listing.address }}{% if listing.landmark %} · {{ listing.landmark }}{% endif %}</p>
+        <div class="flex items-center gap-2 mt-1 flex-wrap">
+          <span class="text-[0.78rem] font-medium px-2 py-0.5 rounded-full
+            {% if listing.category == 'restaurant' %}bg-[#993C1D]/20 text-[#F5C4B3]
+            {% elif listing.category == 'hotel' %}bg-[#185FA5]/20 text-[#B5D4F4]
+            {% elif listing.category == 'bukka' %}bg-[#3B6D11]/20 text-[#C0DD97]
+            {% elif listing.category == 'bar' %}bg-[#993556]/20 text-[#F4C0D1]
+            {% elif listing.category == 'shop' %}bg-[#854F0B]/20 text-[#FAC775]
+            {% elif listing.category == 'recreation' %}bg-teal/10 text-teal
+            {% else %}bg-card text-t3{% endif %}">
+            {{ listing.get_category_display }}
+          </span>
+          {% if listing.avg_rating %}
+          <span class="text-amber text-[0.82rem] tracking-[-0.5px]">
+            {% with listing.avg_rating|floatformat:0 as r %}{% for i in "12345" %}{% if forloop.counter <= r|add:0 %}★{% else %}☆{% endif %}{% endfor %}{% endwith %}
+          </span>
+          <span class="text-[0.82rem] text-t3">({{ listing.review_count }})</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Arrow -->
+      <svg class="flex-shrink-0 text-t3 group-hover:text-teal transition-colors" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+      </svg>
+
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- Bottom nav -->
+<nav class="fixed bottom-0 left-0 right-0 bg-surface border-t border-white/[0.07] flex z-50 md:hidden" aria-label="Mobile navigation">
+  <a href="{% url 'home' %}" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 text-t3 text-[0.7rem] font-medium tracking-[0.3px] hover:text-t2 transition-colors">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+    Home
+  </a>
+  <a href="{% url 'search' %}" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 text-teal text-[0.7rem] font-medium tracking-[0.3px]">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10" cy="10" r="7"/><line x1="15.5" y1="15.5" x2="21" y2="21"/></svg>
+    Search
+  </a>
+  <button class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 border-none bg-transparent text-t3 text-[0.7rem] font-medium tracking-[0.3px] hover:text-t2 transition-colors">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+    Map
+  </button>
+  <button class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 border-none bg-transparent text-t3 text-[0.7rem] font-medium tracking-[0.3px] hover:text-t2 transition-colors">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Profile
+  </button>
+</nav>
+
+</div>
+{% endblock %}

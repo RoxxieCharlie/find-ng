@@ -1,0 +1,733 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ listing.name }} — find.ng{% endblock %}
+
+{% block body %}
+<div class="pb-[80px] md:pb-0">
+
+<!-- Navbar -->
+<nav class="sticky top-0 z-50 bg-[#13151f] border-b border-white/[0.07]">
+  <div class="flex items-center justify-between px-[22px] py-[13px]">
+    <div class="flex items-center gap-2.5">
+      <a href="{% url 'home' %}" class="flex items-center gap-1.5 text-[1.1rem] font-bold tracking-tight flex-shrink-0">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="10" cy="10" r="6.5" stroke="#1D9E75" stroke-width="1.8"/>
+          <circle cx="10" cy="10" r="2.2" fill="#1D9E75"/>
+          <line x1="14.8" y1="14.8" x2="20" y2="20" stroke="#1D9E75" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+        <span class="text-t1">find<span class="text-teal">.ng</span></span>
+      </a>
+      <a href="{% url 'listing_list' %}" class="inline-flex items-center gap-1.5 text-[15px] text-t2 hover:text-t1 transition-colors">
+        <svg width="7" height="12" viewBox="0 0 7 12" fill="none" stroke="#9fa3b0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6 1L1 6l5 5"/>
+        </svg>
+        Listings
+      </a>
+    </div>
+    {% if request.user.is_authenticated %}
+    <a href="{% url 'account' %}" class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/[0.09] bg-[#1a1d27] hover:opacity-85 transition-opacity">
+      <div class="w-5 h-5 rounded-full bg-teal/20 flex items-center justify-center">
+        <span class="text-[10px] font-semibold text-teal">{{ request.user.full_name|slice:":1"|upper }}</span>
+      </div>
+      <span class="text-[13px] font-medium text-t2">{{ request.user.full_name|truncatechars:12 }}</span>
+    </a>
+    {% else %}
+    <a href="{% url 'login' %}" class="px-3.5 py-1.5 rounded-lg border border-amber/50 bg-[#1a1d27] text-amber-light text-[13px] font-medium hover:opacity-85 transition-opacity">Sign in</a>
+    {% endif %}
+  </div>
+</nav>
+
+<!-- Cover photo — clickable to open lightbox -->
+<div class="relative h-[260px] md:h-[340px] overflow-hidden bg-[#13151f] cursor-pointer" id="cover-trigger">
+  {% if cover_photo %}
+    <img src="{{ cover_photo.image.url }}" alt="{{ listing.name }}" class="w-full h-full object-cover object-center">
+    <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/30">
+      <div class="w-12 h-12 rounded-full bg-black/60 flex items-center justify-center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+      </div>
+    </div>
+  {% else %}
+    <div class="w-full h-full
+      {% if listing.category == 'hotel' %}bg-gradient-to-br from-[#1a1f3a] to-[#0d1225]
+      {% elif listing.category == 'restaurant' %}bg-gradient-to-br from-[#2a1a12] to-[#1a0d08]
+      {% elif listing.category == 'bukka' %}bg-gradient-to-br from-[#121f15] to-[#0a150c]
+      {% elif listing.category == 'bar' %}bg-gradient-to-br from-[#1e1230] to-[#110b1e]
+      {% elif listing.category == 'shop' %}bg-gradient-to-br from-[#0f1f1a] to-[#091512]
+      {% elif listing.category == 'recreation' %}bg-gradient-to-br from-[#121e1a] to-[#0a1410]
+      {% else %}bg-gradient-to-br from-[#1a2235] to-[#0d1520]{% endif %}">
+    </div>
+  {% endif %}
+  <div class="absolute bottom-3 left-3 flex gap-1.5 items-center">
+    <span class="rounded-[6px] px-2 py-0.5 text-[12px] font-medium
+      {% if listing.category == 'restaurant' %}bg-[#993C1D] text-[#F5C4B3]
+      {% elif listing.category == 'hotel' %}bg-[#185FA5] text-[#B5D4F4]
+      {% elif listing.category == 'bukka' %}bg-[#3B6D11] text-[#C0DD97]
+      {% elif listing.category == 'bar' %}bg-[#993556] text-[#F4C0D1]
+      {% elif listing.category == 'shop' %}bg-[#854F0B] text-[#FAC775]
+      {% elif listing.category == 'recreation' %}bg-teal-mid text-teal-pale
+      {% else %}bg-card text-t2{% endif %}">{{ listing.get_category_display }}</span>
+    {% if listing.is_verified %}
+    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber/15 border border-amber/40 text-amber-light text-[0.75rem] font-semibold">
+      <svg width="8" height="8" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+        <path d="M2 6l3 3 5-5" stroke="#FAC775" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Verified
+    </span>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Business header -->
+<div class="bg-surface border-b border-white/[0.07] py-5">
+  <div class="max-w-[860px] mx-auto px-5">
+    <div class="flex items-start justify-between gap-2.5 mb-2 flex-wrap">
+      <h1 class="text-[clamp(1.35rem,3vw,1.75rem)] font-bold text-t1 leading-tight flex-1">{{ listing.name }}</h1>
+    {% if listing.is_open_now %}
+      <span class="rounded-[7px] px-2.5 py-[3px] text-[13px] bg-teal-dark border border-teal/80 text-teal flex-shrink-0">
+      Open{% if today_hours and today_hours.close_time %} · Closes {{ today_hours.close_time|time:"g:i A" }}{% endif %}
+      </span>
+    {% else %}
+  <span class="rounded-[7px] px-2.5 py-[3px] text-[13px] bg-[#200808] border border-[#E24B4A]/80 text-[#E24B4A] flex-shrink-0">
+    Closed{% if today_hours and today_hours.open_time %} · Opens {{ today_hours.open_time|time:"g:i A" }}{% endif %}
+  </span>
+{% endif %}
+    </div>
+    {% if listing.avg_rating %}
+    <div class="flex items-center gap-1.5 mb-2">
+      <span class="text-amber text-[0.95rem] tracking-[-1px]">
+        {% with r=listing.avg_rating|floatformat:0 %}
+          {% for i in "12345" %}{% if forloop.counter <= r|add:0 %}★{% else %}☆{% endif %}{% endfor %}
+        {% endwith %}
+      </span>
+      <span class="text-[0.93rem] font-semibold text-t1">{{ listing.avg_rating|floatformat:1 }}</span>
+      <span class="text-[0.85rem] text-t3">({{ listing.review_count }} review{{ listing.review_count|pluralize }})</span>
+    </div>
+    {% else %}
+    <p class="text-[0.85rem] text-t3 mb-2">No reviews yet</p>
+    {% endif %}
+    <p class="flex items-center gap-1.5 text-[0.88rem] text-t3">
+      <svg width="11" height="13" viewBox="0 0 24 24" fill="none" stroke="#6b7080" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+        <circle cx="12" cy="10" r="3"/>
+      </svg>
+      {{ listing.address }}{% if listing.landmark %} &middot; {{ listing.landmark }}{% endif %}
+    </p>
+  </div>
+</div>
+
+<!-- Action buttons -->
+<div class="flex gap-2 flex-wrap px-5 py-4 max-w-[860px] mx-auto border-b border-white/[0.07]">
+  <a href="tel:{{ listing.phone1 }}" class="inline-flex items-center gap-1.5 bg-card border border-white/[0.07] rounded-lg px-[18px] py-[9px] text-[0.88rem] font-medium text-t1 hover:border-white/[0.18] transition-colors">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+    </svg>
+    Call
+  </a>
+  {% if listing.phone2 %}
+  <a href="https://wa.me/{{ listing.phone2 }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 bg-card border border-white/[0.07] rounded-lg px-[18px] py-[9px] text-[0.88rem] font-medium text-[#4ADE80] hover:border-white/[0.18] transition-colors">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+      <path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.558 4.122 1.532 5.857L.057 23.776a.5.5 0 0 0 .612.612l5.919-1.475A11.934 11.934 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.784 9.784 0 0 1-5.002-1.374l-.358-.214-3.717.926.943-3.624-.234-.373A9.771 9.771 0 0 1 2.182 12C2.182 6.573 6.573 2.182 12 2.182S21.818 6.573 21.818 12 17.427 21.818 12 21.818z"/>
+    </svg>
+    WhatsApp
+  </a>
+  {% endif %}
+  {% if listing.website %}
+  <a href="{{ listing.website }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 bg-card border border-white/[0.07] rounded-lg px-[18px] py-[9px] text-[0.88rem] font-medium text-t2 hover:border-white/[0.18] transition-colors">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+    </svg>
+    Website
+  </a>
+  {% endif %}
+</div>
+
+<!-- Body -->
+<div class="max-w-[860px] mx-auto px-5 pb-20">
+
+  <!-- Hours -->
+  {% if hours_sorted %}
+  <div class="border-b border-white/[0.07] py-6">
+    <h2 class="text-[1rem] font-semibold text-t1 mb-3.5">Opening hours</h2>
+    <div class="flex flex-col gap-0.5">
+      {% for h in hours_sorted %}
+      <div class="flex justify-between px-[11px] py-2 rounded-lg text-[0.93rem] {% if h.day == today_key %}bg-teal/15{% endif %}">
+        <span class="font-medium {% if h.day == today_key %}text-teal{% else %}text-t2{% endif %}">{{ h.get_day_display }}</span>
+        <span class="{% if h.day == today_key %}text-teal-light{% else %}text-t3{% endif %}">
+          {% if h.is_closed %}Closed
+          {% elif h.open_time and h.close_time %}{{ h.open_time|time:"g:i A" }} – {{ h.close_time|time:"g:i A" }}
+          {% else %}—{% endif %}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Description -->
+  {% if listing.description %}
+  <div class="border-b border-white/[0.07] py-6">
+    <h2 class="text-[1rem] font-semibold text-t1 mb-3.5">About</h2>
+    <p class="text-[0.95rem] text-t2 leading-[1.7]">{{ listing.description }}</p>
+  </div>
+  {% endif %}
+
+  <!-- Accepted payments -->
+  {% if listing.accepted_payments.exists %}
+  <div class="border-b border-white/[0.07] py-6">
+    <h2 class="text-[1rem] font-semibold text-t1 mb-3.5">Accepted payments</h2>
+    <div class="flex gap-2 flex-wrap">
+      {% for pm in listing.accepted_payments.all %}
+      <span class="px-[13px] py-[5px] rounded-full bg-card border border-white/[0.07] text-[0.82rem] text-t2">{{ pm.get_name_display }}</span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Menu -->
+  {% if is_food and listing.menu_items.exists %}
+  <div class="border-b border-white/[0.07] py-6">
+    <h2 class="text-[1rem] font-semibold text-t1 mb-3.5">Menu</h2>
+    <div class="flex flex-col gap-0.5">
+      {% for item in listing.menu_items.all %}
+      <div class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-card border border-white/[0.07]">
+        <div class="flex flex-col gap-0.5 flex-1 min-w-0">
+          <span class="text-[0.95rem] font-medium text-t1">{{ item.item_name }}</span>
+          {% if item.description %}<span class="text-[0.8rem] text-t3">{{ item.description }}</span>{% endif %}
+        </div>
+        {% if item.price %}
+        <span class="text-[0.95rem] font-semibold text-teal flex-shrink-0 ml-3">₦{{ item.price|floatformat:0 }}</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Room types -->
+  {% if is_hotel and listing.room_type.exists %}
+  <div class="border-b border-white/[0.07] py-6">
+    <h2 class="text-[1rem] font-semibold text-t1 mb-3.5">Room types</h2>
+    <div class="flex flex-col gap-0.5">
+      {% for room in listing.room_type.all %}
+      <div class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-card border border-white/[0.07]">
+        <span class="text-[0.95rem] font-medium text-t1">{{ room.room_name }}</span>
+        {% if room.price_per_night %}
+        <span class="text-[0.95rem] font-semibold text-teal flex-shrink-0 ml-3">₦{{ room.price_per_night|floatformat:0 }}<span class="text-[0.76rem] font-normal text-t3">/night</span></span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Amenities -->
+  {% if listing.amenities.exists %}
+  <div class="border-b border-white/[0.07] py-6">
+    <h2 class="text-[1rem] font-semibold text-t1 mb-3.5">Amenities</h2>
+    <div class="flex gap-2 flex-wrap">
+      {% for a in listing.amenities.all %}
+      <span class="px-[13px] py-[6px] rounded-full bg-card border border-white/[0.07] text-[0.82rem] text-t2">{{ a.name }}</span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Activities -->
+  {% if is_recreation and listing.activities.exists %}
+  <div class="border-b border-white/[0.07] py-6">
+    <h2 class="text-[1rem] font-semibold text-t1 mb-3.5">Activities</h2>
+    <div class="flex flex-col gap-0.5">
+      {% for act in listing.activities.all %}
+      <div class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-card border border-white/[0.07]">
+        <span class="text-[0.95rem] font-medium text-t1">{{ act.name }}</span>
+        {% if act.price %}
+        <span class="text-[0.95rem] font-semibold text-teal flex-shrink-0 ml-3">₦{{ act.price|floatformat:0 }}</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Products -->
+  {% if is_shop and listing.products.exists %}
+  <div class="border-b border-white/[0.07] py-6">
+    <h2 class="text-[1rem] font-semibold text-t1 mb-3.5">Products</h2>
+    <div class="flex gap-2 flex-wrap">
+      {% for p in listing.products.all %}
+      <span class="px-[13px] py-[6px] rounded-full bg-card border border-white/[0.07] text-[0.82rem] text-t2">{{ p.name }}</span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Services -->
+  {% if listing.services.exists %}
+  <div class="border-b border-white/[0.07] py-6">
+    <h2 class="text-[1rem] font-semibold text-t1 mb-3.5">Services</h2>
+    <div class="flex gap-2 flex-wrap">
+      {% for s in listing.services.all %}
+      <span class="px-[13px] py-[6px] rounded-full bg-card border border-white/[0.07] text-[0.82rem] text-t2">{{ s.name }}</span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Promo video -->
+  {% if listing.youtube_url %}
+  {% with listing.get_youtube_embed_url as embed_url %}
+  {% if embed_url %}
+  <div class="border-b border-white/[0.07] py-6">
+    <h2 class="text-[1rem] font-semibold text-t1 mb-3.5">Video</h2>
+    <div class="relative w-full rounded-xl overflow-hidden bg-black" style="padding-top: 56.25%;">
+      <iframe
+        src="{{ embed_url }}"
+        class="absolute inset-0 w-full h-full"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+        loading="lazy"
+      ></iframe>
+    </div>
+  </div>
+  {% endif %}
+  {% endwith %}
+  {% endif %}
+
+  <!-- Photos & Videos gallery -->
+  {% if photos.count > 0 %}
+  <div class="border-b border-white/[0.07] py-6">
+    <h2 class="text-[1rem] font-semibold text-t1 mb-3.5">Photos & Videos</h2>
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-2" id="gallery">
+      {% for photo in photos %}
+      <div
+        class="relative rounded-lg overflow-hidden bg-card cursor-pointer group gallery-item"
+        style="padding-top: 56.25%;"
+        data-index="{{ forloop.counter0 }}"
+        data-type="{{ photo.media_type }}"
+        {% if photo.media_type == 'image' %}
+        data-src="{{ photo.image.url }}"
+        data-caption="{{ photo.caption }}"
+        {% else %}
+        data-embed="{{ photo.get_youtube_embed_url }}"
+        data-thumb="{{ photo.get_youtube_thumbnail }}"
+        data-caption="{{ photo.caption }}"
+        {% endif %}
+      >
+        <div class="absolute inset-0">
+          {% if photo.media_type == 'image' %}
+            <img
+              src="{{ photo.image.url }}"
+              alt="{{ photo.caption|default:listing.name }}"
+              class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
+            >
+          {% else %}
+            <img
+              src="{{ photo.get_youtube_thumbnail }}"
+              alt="{{ photo.caption|default:'Video' }}"
+              class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
+            >
+            <!-- Play button overlay -->
+            <div class="absolute inset-0 flex items-center justify-center">
+              <div class="w-12 h-12 rounded-full bg-black/70 flex items-center justify-center">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </div>
+            </div>
+          {% endif %}
+          <!-- Hover expand icon -->
+          <div class="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors flex items-center justify-center">
+            <div class="opacity-0 group-hover:opacity-100 transition-opacity w-9 h-9 rounded-full bg-black/60 flex items-center justify-center">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── REVIEWS ── -->
+  <div class="border-b border-white/[0.07] py-6">
+    <div class="flex items-center justify-between mb-3.5">
+      <h2 class="text-[1rem] font-semibold text-t1">Reviews</h2>
+      {% if listing.review_count %}<span class="text-[0.82rem] text-t3">{{ listing.review_count }} review{{ listing.review_count|pluralize }}</span>{% endif %}
+    </div>
+
+    {% if reviews %}
+    <div class="flex flex-col gap-2.5 mb-5">
+      {% for review in reviews %}
+      <div class="bg-card border rounded-xl px-[15px] py-[13px] {% if review.user == request.user %}border-teal/20{% else %}border-white/[0.07]{% endif %}">
+        <div class="flex items-center gap-2 flex-wrap mb-1.5">
+          <span class="text-[0.93rem] font-semibold text-t1 flex-1">
+            {{ review.user.full_name }}
+            {% if review.user == request.user %}
+            <span class="ml-1.5 text-[10px] font-bold uppercase tracking-wider bg-teal/10 text-teal px-2 py-0.5 rounded-full">Your review</span>
+            {% endif %}
+          </span>
+          <span class="text-amber text-[0.85rem] tracking-[-1px]">
+            {% for i in "12345" %}{% if forloop.counter <= review.star_rating %}★{% else %}☆{% endif %}{% endfor %}
+          </span>
+          <span class="text-[0.78rem] text-t3">{{ review.created_at|date:"j M Y" }}</span>
+        </div>
+        {% if review.comment %}
+        <p class="text-[0.93rem] text-t2 leading-[1.6]">{{ review.comment }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-[0.88rem] text-t3 text-center py-5 mb-4">No reviews yet — be the first to review this business.</p>
+    {% endif %}
+
+    {% if request.user.is_authenticated %}
+      {% if user_review %}
+      <div class="rounded-xl border border-amber/20 bg-[#1a1400] overflow-hidden">
+        <div class="px-4 pt-4 pb-3 border-b border-amber/10">
+          <p class="text-[0.78rem] font-semibold uppercase tracking-wider text-[#EF9F27]/70">Edit your review</p>
+        </div>
+        <form method="post" action="{% url 'review_edit' listing.slug %}" class="px-4 py-4">
+          {% csrf_token %}
+          <div class="flex gap-1.5 mb-3" id="star-picker-edit">
+            {% for i in "12345" %}
+            <button type="button" class="star-btn-edit text-[26px] leading-none transition-colors {% if forloop.counter <= user_review.star_rating %}text-amber{% else %}text-white/10{% endif %}" data-val="{{ forloop.counter }}">★</button>
+            {% endfor %}
+          </div>
+          <input type="hidden" name="star_rating" id="star-input-edit" value="{{ user_review.star_rating }}">
+          <textarea name="comment" rows="3" maxlength="500" class="w-full bg-[#13151f] border border-white/[0.08] rounded-lg text-[0.93rem] text-t1 placeholder-t3 px-3.5 py-2.5 resize-none outline-none focus:border-amber/40 transition-colors">{{ user_review.comment }}</textarea>
+          <div class="flex items-center justify-between mt-2.5">
+            <span class="text-[0.75rem] text-t3" id="char-count-edit">{{ user_review.comment|length }} / 500</span>
+            <button type="submit" class="px-4 py-2 rounded-lg bg-[#EF9F27] hover:opacity-90 text-[#1a0d00] text-[0.85rem] font-semibold transition-opacity">Update review</button>
+          </div>
+        </form>
+      </div>
+      {% else %}
+      <div class="rounded-xl border border-teal/20 bg-teal/[0.04] overflow-hidden">
+        <div class="px-4 pt-4 pb-3 border-b border-teal/10">
+          <p class="text-[0.78rem] font-semibold uppercase tracking-wider text-teal/70">Write a review</p>
+        </div>
+        <form method="post" action="{% url 'review_create' listing.slug %}" class="px-4 py-4" id="review-form">
+          {% csrf_token %}
+          <div class="flex gap-1.5 mb-1.5" id="star-picker">
+            {% for i in "12345" %}
+            <button type="button" class="star-btn text-[26px] leading-none transition-colors text-white/10" data-val="{{ forloop.counter }}">★</button>
+            {% endfor %}
+          </div>
+          <input type="hidden" name="star_rating" id="star-input" value="0">
+          <p class="text-[0.78rem] text-red-400 mb-2 hidden" id="star-error">Please select a star rating.</p>
+          <textarea name="comment" rows="3" maxlength="500" placeholder="Share your experience at this business…" class="w-full bg-[#13151f] border border-white/[0.08] rounded-lg text-[0.93rem] text-t1 placeholder-t3 px-3.5 py-2.5 resize-none outline-none focus:border-teal/40 transition-colors"></textarea>
+          <div class="flex items-center justify-between mt-2.5">
+            <span class="text-[0.75rem] text-t3" id="char-count">0 / 500</span>
+            <button type="submit" class="px-4 py-2 rounded-lg bg-teal hover:opacity-90 text-[#04342C] text-[0.85rem] font-semibold transition-opacity">Submit review</button>
+          </div>
+        </form>
+      </div>
+      {% endif %}
+    {% else %}
+    <div class="rounded-xl border border-white/[0.07] bg-card px-4 py-4 flex items-center justify-between gap-3 flex-wrap">
+      <p class="text-[0.9rem] text-t2">Have you been here? <a href="{% url 'login' %}?next={{ request.path }}" class="text-teal font-medium hover:underline">Sign in</a> to leave a review.</p>
+      <a href="{% url 'login' %}?next={{ request.path }}" class="flex-shrink-0 px-3.5 py-2 rounded-lg border border-teal/30 text-teal text-[0.85rem] font-medium hover:bg-teal/10 transition-colors">Sign in to review</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Claim banner -->
+  <div class="pt-5">
+    {% if request.user.is_authenticated %}
+      {% if user_claim %}
+        {% if user_claim.status == 'pending' %}
+        <div class="w-full rounded-[11px] px-4 py-3.5 flex items-start gap-3 bg-[#091a2e] border border-[#185FA5]/80">
+          <div class="w-8 h-8 rounded-lg bg-[#0c1e32] flex items-center justify-center flex-shrink-0">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6" stroke="#378ADD" stroke-width="1.1"/><path d="M7.5 4.5v3l2 1.5" stroke="#378ADD" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-[15px] font-medium text-[#85B7EB] mb-1">Claim under review</p>
+            <p class="text-[14px] text-[#378ADD] leading-[1.6]">Your claim was submitted on {{ user_claim.claimed_at|date:"j F Y" }}. We will contact you within 48 hours to verify your details.</p>
+          </div>
+          <div class="flex-shrink-0 flex flex-col items-end gap-1.5">
+            <a href="{% url 'account' %}" class="rounded-[7px] px-3 py-1.5 text-[14px] font-medium bg-[#1a1d2a] border border-white/[0.09] text-t2 hover:opacity-85 transition-opacity">View my account</a>
+            <span class="text-[13px] text-[#4b5060] whitespace-nowrap">Submitted {{ user_claim.claimed_at|date:"j F Y" }}</span>
+          </div>
+        </div>
+        {% elif user_claim.status == 'approved' %}
+        <div class="w-full rounded-[11px] px-4 py-3.5 flex items-start gap-3 bg-[#04302a] border border-teal/80">
+          <div class="w-8 h-8 rounded-lg bg-teal-dark flex items-center justify-center flex-shrink-0">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M3 7.5l3.5 3.5 5.5-6" stroke="#1D9E75" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-[15px] font-medium text-teal-pale mb-1">Claim approved — this is your business</p>
+            <p class="text-[14px] text-teal-light leading-[1.6]">You are the confirmed owner of this listing. Keep your details up to date and respond to reviews.</p>
+          </div>
+          <div class="flex-shrink-0 flex flex-col items-end gap-1.5">
+            <a href="#" class="rounded-[7px] px-3 py-1.5 text-[14px] font-medium bg-teal text-teal-dark border-none hover:opacity-85 transition-opacity">Edit listing</a>
+            <a href="#" class="rounded-[7px] px-3 py-1.5 text-[14px] font-medium bg-amber-dark border border-amber/80 text-amber-light hover:opacity-85 transition-opacity">Get verified badge</a>
+          </div>
+        </div>
+        {% elif user_claim.status == 'rejected' %}
+        <div class="w-full rounded-[11px] px-4 py-3.5 flex items-start gap-3 bg-[#1a0505] border border-[#E24B4A]/80">
+          <div class="w-8 h-8 rounded-lg bg-[#200808] flex items-center justify-center flex-shrink-0">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M4 4l7 7M11 4l-7 7" stroke="#E24B4A" stroke-width="1.3" stroke-linecap="round"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-[15px] font-medium text-[#F09595] mb-1">Claim not approved</p>
+            <p class="text-[14px] text-[#E24B4A] leading-[1.6]">We could not verify your connection to this business. Contact us on WhatsApp if you believe this is a mistake.</p>
+          </div>
+          <div class="flex-shrink-0 flex flex-col items-end gap-1.5">
+            <a href="https://wa.me/2348000000000" target="_blank" rel="noopener" class="rounded-[7px] px-3 py-1.5 text-[14px] font-medium bg-[#200808] border border-[#E24B4A]/80 text-[#F09595] hover:opacity-85 transition-opacity">Contact us</a>
+            {% if user_claim.reviewed_at %}<span class="text-[13px] text-[#4b5060] whitespace-nowrap">Reviewed {{ user_claim.reviewed_at|date:"j F Y" }}</span>{% endif %}
+          </div>
+        </div>
+        {% endif %}
+      {% else %}
+        <div class="w-full rounded-[11px] px-4 py-3.5 flex items-start gap-3 bg-card border border-white/[0.07]">
+          <div class="w-8 h-8 rounded-lg bg-teal/15 flex items-center justify-center flex-shrink-0">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-[15px] font-medium text-t1 mb-1">Is this your business?</p>
+            <p class="text-[14px] text-t3 leading-[1.6]">Claim this listing to manage details, respond to reviews, and get verified.</p>
+          </div>
+          <div class="flex-shrink-0">
+            <a href="{% url 'claim' listing.slug %}" class="rounded-[7px] px-3 py-1.5 text-[14px] font-medium bg-teal text-teal-dark border-none hover:opacity-85 transition-opacity">Claim this business</a>
+          </div>
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="w-full rounded-[11px] px-4 py-3.5 flex items-start gap-3 bg-card border border-white/[0.07]">
+        <div class="w-8 h-8 rounded-lg bg-teal/15 flex items-center justify-center flex-shrink-0">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-[15px] font-medium text-t1 mb-1">Is this your business?</p>
+          <p class="text-[14px] text-t3 leading-[1.6]">Claim this listing to manage details, respond to reviews, and get verified.</p>
+        </div>
+        <div class="flex-shrink-0">
+          <a href="{% url 'claim' listing.slug %}" class="rounded-[7px] px-3 py-1.5 text-[14px] font-medium bg-teal text-teal-dark border-none hover:opacity-85 transition-opacity">Claim this business</a>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- ── LIGHTBOX ── -->
+<div id="lightbox" class="fixed inset-0 z-[999] bg-black/95 flex items-center justify-center hidden" role="dialog" aria-modal="true">
+  <!-- Close -->
+  <button id="lb-close" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors z-10">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <!-- Prev -->
+  <button id="lb-prev" class="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors z-10">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <!-- Next -->
+  <button id="lb-next" class="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors z-10">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+  </button>
+  <!-- Media container -->
+  <div class="w-full h-full flex flex-col items-center justify-center px-16 py-12">
+    <div id="lb-media" class="w-full max-w-[900px] max-h-[80vh] flex items-center justify-center"></div>
+    <p id="lb-caption" class="text-white/60 text-[0.88rem] mt-3 text-center max-w-[600px]"></p>
+    <p id="lb-counter" class="text-white/30 text-[0.78rem] mt-1"></p>
+  </div>
+</div>
+
+<!-- Bottom nav -->
+<nav class="fixed bottom-0 left-0 right-0 bg-surface border-t border-white/[0.07] flex z-50 md:hidden" aria-label="Mobile navigation">
+  <a href="{% url 'home' %}" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 text-t3 text-[0.7rem] font-medium tracking-[0.3px] hover:text-t2 transition-colors">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+    Home
+  </a>
+  <a href="{% url 'listing_list' %}" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 text-t3 text-[0.7rem] font-medium tracking-[0.3px] hover:text-t2 transition-colors">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10" cy="10" r="7"/><line x1="15.5" y1="15.5" x2="21" y2="21"/></svg>
+    Search
+  </a>
+  <button class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 border-none bg-transparent text-t3 text-[0.7rem] font-medium tracking-[0.3px]">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+    Map
+  </button>
+  {% if request.user.is_authenticated %}
+  <a href="{% url 'account' %}" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 text-t3 text-[0.7rem] font-medium tracking-[0.3px] hover:text-t2 transition-colors">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Profile
+  </a>
+  {% else %}
+  <a href="{% url 'login' %}" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 text-t3 text-[0.7rem] font-medium tracking-[0.3px] hover:text-t2 transition-colors">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Sign in
+  </a>
+  {% endif %}
+</nav>
+
+</div>
+
+<script>
+(function () {
+  // ── Gallery lightbox ──────────────────────────────────────────────────────
+  var items   = [];
+  var current = 0;
+
+  document.querySelectorAll('.gallery-item').forEach(function (el) {
+    items.push({
+      type:    el.dataset.type,
+      src:     el.dataset.src    || null,
+      embed:   el.dataset.embed  || null,
+      thumb:   el.dataset.thumb  || null,
+      caption: el.dataset.caption || '',
+    });
+    el.addEventListener('click', function () {
+      openLightbox(parseInt(el.dataset.index));
+    });
+  });
+
+  // Cover photo opens lightbox at index 0 if there are gallery items
+  {% if cover_photo %}
+  var coverTrigger = document.getElementById('cover-trigger');
+  if (coverTrigger) {
+    coverTrigger.addEventListener('click', function () {
+      if (items.length > 0) {
+        openLightbox(0);
+      } else {
+        // No gallery — show cover photo alone
+        openCoverOnly('{{ cover_photo.image.url }}', '{{ listing.name }}');
+      }
+    });
+  }
+  {% endif %}
+
+  function openCoverOnly(src, caption) {
+    var lb = document.getElementById('lightbox');
+    var media = document.getElementById('lb-media');
+    media.innerHTML = '<img src="' + src + '" alt="' + caption + '" style="max-width:100%;max-height:70vh;object-fit:contain;border-radius:8px;">';
+    document.getElementById('lb-caption').textContent = caption;
+    document.getElementById('lb-counter').textContent = '';
+    document.getElementById('lb-prev').style.display = 'none';
+    document.getElementById('lb-next').style.display = 'none';
+    lb.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function openLightbox(index) {
+    current = index;
+    render();
+    document.getElementById('lightbox').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.add('hidden');
+    document.body.style.overflow = '';
+    // Stop any playing video by clearing iframe
+    var media = document.getElementById('lb-media');
+    media.innerHTML = '';
+  }
+
+  function render() {
+    var item    = items[current];
+    var media   = document.getElementById('lb-media');
+    var caption = document.getElementById('lb-caption');
+    var counter = document.getElementById('lb-counter');
+    var prev    = document.getElementById('lb-prev');
+    var next    = document.getElementById('lb-next');
+
+    media.innerHTML = '';
+
+    if (item.type === 'image') {
+      var img = document.createElement('img');
+      img.src = item.src;
+      img.alt = item.caption;
+      img.style.cssText = 'max-width:100%;max-height:70vh;object-fit:contain;border-radius:8px;';
+      media.appendChild(img);
+    } else {
+      var wrap = document.createElement('div');
+      wrap.style.cssText = 'width:100%;max-width:900px;position:relative;padding-top:56.25%;';
+      var iframe = document.createElement('iframe');
+      iframe.src = item.embed + '?autoplay=1';
+      iframe.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:none;border-radius:8px;';
+      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+      iframe.allowFullscreen = true;
+      wrap.appendChild(iframe);
+      media.appendChild(wrap);
+    }
+
+    caption.textContent = item.caption;
+    counter.textContent = (current + 1) + ' / ' + items.length;
+    prev.style.display = items.length > 1 ? '' : 'none';
+    next.style.display = items.length > 1 ? '' : 'none';
+  }
+
+  document.getElementById('lb-close').addEventListener('click', closeLightbox);
+  document.getElementById('lb-prev').addEventListener('click', function () {
+    current = (current - 1 + items.length) % items.length;
+    render();
+  });
+  document.getElementById('lb-next').addEventListener('click', function () {
+    current = (current + 1) % items.length;
+    render();
+  });
+
+  // Close on backdrop click
+  document.getElementById('lightbox').addEventListener('click', function (e) {
+    if (e.target === this) closeLightbox();
+  });
+
+  // Keyboard nav
+  document.addEventListener('keydown', function (e) {
+    var lb = document.getElementById('lightbox');
+    if (lb.classList.contains('hidden')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft')  { current = (current - 1 + items.length) % items.length; render(); }
+    if (e.key === 'ArrowRight') { current = (current + 1) % items.length; render(); }
+  });
+
+  // ── Review star picker ────────────────────────────────────────────────────
+  function initPicker(pickerId, inputId, counterId) {
+    var picker = document.getElementById(pickerId);
+    if (!picker) return;
+    var input   = document.getElementById(inputId);
+    var counter = document.getElementById(counterId);
+    var btns    = picker.querySelectorAll('[data-val]');
+
+    btns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var val = parseInt(this.dataset.val);
+        input.value = val;
+        btns.forEach(function (b, i) {
+          b.classList.toggle('text-amber',    i < val);
+          b.classList.toggle('text-white/10', i >= val);
+        });
+        var err = document.getElementById('star-error');
+        if (err) err.classList.add('hidden');
+      });
+    });
+
+    var ta = picker.closest('form') ? picker.closest('form').querySelector('textarea') : null;
+    if (ta && counter) {
+      counter.textContent = ta.value.length + ' / 500';
+      ta.addEventListener('input', function () {
+        counter.textContent = this.value.length + ' / 500';
+      });
+    }
+  }
+
+  initPicker('star-picker',      'star-input',      'char-count');
+  initPicker('star-picker-edit', 'star-input-edit', 'char-count-edit');
+
+  var form = document.getElementById('review-form');
+  if (form) {
+    form.addEventListener('submit', function (e) {
+      var val = parseInt(document.getElementById('star-input').value);
+      if (!val || val < 1) {
+        e.preventDefault();
+        document.getElementById('star-error').classList.remove('hidden');
+      }
+    });
+  }
+})();
+</script>
+
+{% endblock %}

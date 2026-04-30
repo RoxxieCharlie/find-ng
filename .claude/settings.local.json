@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(printf \"# core retired — logic moved to accounts and listings apps\\\\n\")",
+      "Bash(printf \"# core retired\\\\n\")"
+    ]
+  }
+}

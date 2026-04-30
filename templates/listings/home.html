@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}find.ng — Discover local businesses{% endblock %}
+
+{% block body %}
+<div class="pb-[72px] md:pb-0">
+
+<!-- Navbar -->
+<nav class="sticky top-0 z-50 bg-surface border-b border-white/[0.07] backdrop-blur-md">
+  <div class="flex items-center gap-3 max-w-[1200px] mx-auto px-4 h-[60px]">
+    <a href="{% url 'home' %}" class="flex items-center gap-1.5 text-[1.1rem] font-bold tracking-tight flex-shrink-0">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="10" cy="10" r="6.5" stroke="#1D9E75" stroke-width="1.8"/>
+        <circle cx="10" cy="10" r="2.2" fill="#1D9E75"/>
+        <line x1="14.8" y1="14.8" x2="20" y2="20" stroke="#1D9E75" stroke-width="2.2" stroke-linecap="round"/>
+      </svg>
+      <span class="text-t1">find<span class="text-teal">.ng</span></span>
+    </a>
+    <div class="hidden md:flex gap-1 ml-6">
+      <button class="px-3.5 py-1.5 rounded-full border-none bg-teal/15 text-teal text-[0.9rem] font-medium">All</button>
+      <button class="px-3.5 py-1.5 rounded-full border-none bg-transparent text-t2 text-[0.9rem] font-medium hover:bg-card hover:text-t1 transition-colors">Hotels</button>
+      <button class="px-3.5 py-1.5 rounded-full border-none bg-transparent text-t2 text-[0.9rem] font-medium hover:bg-card hover:text-t1 transition-colors">Food</button>
+      <button class="px-3.5 py-1.5 rounded-full border-none bg-transparent text-t2 text-[0.9rem] font-medium hover:bg-card hover:text-t1 transition-colors">Bars</button>
+    </div>
+    <div class="flex-1"></div>
+    {% if request.user.is_authenticated %}
+  <a href="{% url 'account' %}" class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/[0.09] bg-[#1a1d27] hover:opacity-85 transition-opacity">
+    <div class="w-5 h-5 rounded-full bg-teal/20 flex items-center justify-center">
+      <span class="text-[10px] font-semibold text-teal">{{ request.user.full_name|slice:":1"|upper }}</span>
+    </div>
+    <span class="text-[13px] font-medium text-t2">{{ request.user.full_name|truncatechars:12 }}</span>
+  </a>
+{% else %}
+  <a href="{% url 'login' %}" class="px-3.5 py-1.5 rounded-lg border border-amber/50 bg-[#1a1d27] text-amber-light text-[13px] font-medium hover:opacity-85 transition-opacity">Sign in</a>
+{% endif %}
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="bg-surface border-b border-white/[0.07] px-4 pt-9 pb-7 md:pt-[52px] md:pb-10 lg:pt-16 lg:pb-12">
+  <div class="max-w-[700px] mx-auto">
+    <div class="inline-flex items-center gap-1.5 text-[14px] font-medium text-teal-light tracking-[0.5px] mb-3.5">
+      <span class="w-1.5 h-1.5 rounded-full bg-teal inline-block flex-shrink-0"></span>
+      {{ location }}
+    </div>
+    <h1 class="text-[clamp(1.7rem,4.5vw,2.4rem)] font-bold leading-tight text-t1 mb-2.5">Discover places that matter here</h1>
+    <p class="text-[1.75rem] font-medium text-t1 mb-5 leading-snug">Hotels &middot; Restaurants &middot; Bukkas &middot; Bars &middot; Shops &middot; Recreation</p>
+    <form action="{% url 'search' %}" method="get" class="flex gap-2">
+      <div class="flex-1 flex items-center gap-2.5 bg-card border border-white/[0.07] rounded-xl px-3.5">
+        <svg class="text-t3 flex-shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="10" cy="10" r="7"/><line x1="15.5" y1="15.5" x2="21" y2="21"/>
+        </svg>
+        <input
+          type="search"
+          name="q"
+          placeholder="Search businesses, areas…"
+          class="flex-1 bg-transparent border-none outline-none text-t1 text-[0.95rem] py-3.5 placeholder:text-t3"
+        >
+      </div>
+      <button type="submit" class="flex items-center gap-1.5 px-4 h-[48px] rounded-xl border border-white/[0.07] bg-card text-t2 text-[0.9rem] font-medium hover:text-t1 transition-colors">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
+        </svg>
+        Search
+      </button>
+    </form>
+  </div>
+</section>
+
+<!-- Category chips -->
+<div class="flex gap-2 overflow-x-auto px-4 py-3.5 scrollbar-hide md:px-6">
+  <a href="{% url 'listing_list' %}" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-[20px] bg-teal text-teal-dark border border-transparent text-[0.88rem] font-medium whitespace-nowrap flex-shrink-0 hover:-translate-y-px transition-transform">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/></svg>
+    All
+  </a>
+  <a href="{% url 'listing_list' %}?category=hotel" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-[20px] bg-card border border-[#378ADD] text-[#378ADD] text-[0.88rem] font-medium whitespace-nowrap flex-shrink-0 hover:-translate-y-px transition-transform">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="12" height="8" rx="1"/><path d="M5 14v-3h6v3"/><path d="M5 6V5a3 3 0 0 1 6 0v1"/></svg>
+    Hotels
+  </a>
+  <a href="{% url 'listing_list' %}?category=restaurant" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-[20px] bg-card border border-[#D85A30] text-[#D85A30] text-[0.88rem] font-medium whitespace-nowrap flex-shrink-0 hover:-translate-y-px transition-transform">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M5 2v4a2 2 0 0 0 2 2v6"/><path d="M4 2v3M6 2v3"/><path d="M11 2c0 0 2 1.5 2 4s-2 2.5-2 2.5V14"/></svg>
+    Restaurants
+  </a>
+  <a href="{% url 'listing_list' %}?category=bukka" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-[20px] bg-card border border-[#639922] text-[#639922] text-[0.88rem] font-medium whitespace-nowrap flex-shrink-0 hover:-translate-y-px transition-transform">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 8h12a6 6 0 0 1-12 0z"/><line x1="8" y1="14" x2="8" y2="15"/><line x1="5" y1="15" x2="11" y2="15"/><path d="M5 8V5M8 8V4M11 8V5"/></svg>
+    Bukkas
+  </a>
+  <a href="{% url 'listing_list' %}?category=bar" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-[20px] bg-card border border-[#D4537E] text-[#D4537E] text-[0.88rem] font-medium whitespace-nowrap flex-shrink-0 hover:-translate-y-px transition-transform">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="3" height="6" rx="1"/><rect x="6.5" y="5" width="3" height="9" rx="1"/><rect x="11" y="2" width="3" height="12" rx="1"/></svg>
+    Bars
+  </a>
+  <a href="{% url 'listing_list' %}?category=shop" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-[20px] bg-card border border-[#BA7517] text-[#BA7517] text-[0.88rem] font-medium whitespace-nowrap flex-shrink-0 hover:-translate-y-px transition-transform">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h10l-1.5 8H4.5L3 5z"/><path d="M6 5V4a2 2 0 0 1 4 0v1"/></svg>
+    Shops
+  </a>
+  <a href="{% url 'listing_list' %}?category=recreation" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-[20px] bg-card border border-teal text-teal text-[0.88rem] font-medium whitespace-nowrap flex-shrink-0 hover:-translate-y-px transition-transform">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+    Recreation
+  </a>
+</div>
+
+<!-- Feed -->
+<div class="max-w-[1200px] mx-auto px-4 py-7 md:px-6 md:py-9">
+
+  <!-- Verified businesses -->
+  <section class="mb-9">
+    <div class="flex items-baseline justify-between mb-4">
+      <h2 class="text-[1.15rem] font-semibold text-t1">Verified businesses</h2>
+      <a href="{% url 'listing_list' %}?status=verified" class="text-[0.9rem] text-teal hover:underline">See all</a>
+    </div>
+
+    {% if verified_listings %}
+    <div class="flex gap-3.5 overflow-x-auto pb-1.5 scrollbar-hide">
+      {% for listing in verified_listings %}
+      <a href="{% url 'listing_detail' listing.slug %}" class="flex-shrink-0 w-[270px] bg-card border border-white/[0.07] rounded-xl overflow-hidden hover:-translate-y-0.5 hover:border-white/[0.14] transition-[transform,border-color]" data-cat="{{ listing.category }}">
+        <div class="relative h-[175px] overflow-hidden">
+          {% with listing.photos.first as photo %}
+            {% if photo %}
+              <img src="{{ photo.image.url }}" alt="{{ listing.name }}">
+            {% else %}
+              <div class="w-full h-full bg-gradient-to-br from-[#1a2235] to-[#0d1520]"></div>
+            {% endif %}
+          {% endwith %}
+          <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-black/75 backdrop-blur-sm text-t1 text-[0.78rem] font-semibold tracking-[0.2px]">{{ listing.get_category_display }}</span>
+          <span class="absolute top-2.5 right-2.5 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber/15 border border-amber/40 text-amber-light text-[0.75rem] font-semibold">
+            <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#FAC775" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Verified
+          </span>
+        </div>
+        <div class="px-[15px] pt-[13px] pb-[15px]">
+          <div class="text-[1.05rem] font-semibold mb-1.5 text-t1">{{ listing.name }}</div>
+          <div class="flex items-center gap-1.5">
+            {% if listing.avg_rating %}
+              <span class="text-amber text-[0.92rem] tracking-[-1px]">
+                {% with listing.avg_rating|floatformat:0 as r %}{% for i in "12345" %}{% if forloop.counter <= r|add:0 %}★{% else %}☆{% endif %}{% endfor %}{% endwith %}
+              </span>
+              <span class="text-[0.93rem] font-semibold text-t1">{{ listing.avg_rating|floatformat:1 }}</span>
+              <span class="text-[0.88rem] text-t3">({{ listing.review_count }})</span>
+            {% else %}
+              <span class="text-[0.88rem] text-t3">No reviews yet</span>
+            {% endif %}
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="border border-dashed border-white/[0.125] rounded-2xl bg-bg p-10 text-center mb-8">
+      <div class="w-14 h-14 bg-card border border-white/[0.094] rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+          <circle cx="10" cy="10" r="6.5" stroke="#5DCAA5" stroke-width="1.6" stroke-dasharray="4 2"/>
+          <circle cx="10" cy="10" r="2.2" fill="#5DCAA5" opacity=".5"/>
+          <line x1="14.8" y1="14.8" x2="19.5" y2="19.5" stroke="#5DCAA5" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 2"/>
+        </svg>
+      </div>
+      <p class="text-[18px] font-medium text-t1 mb-1.5">No verified businesses yet</p>
+      <p class="text-[16px] text-t3 mb-5 leading-relaxed max-w-[280px] mx-auto">Verified listings are coming soon. Businesses on Bonny Island can apply to get the verified badge and appear here.</p>
+      <div class="flex gap-2 justify-center flex-wrap">
+        <button class="px-[18px] py-[9px] rounded-[10px] bg-teal border-none text-teal-dark text-[16px] font-medium hover:opacity-[0.88] transition-opacity">List your business</button>
+        <button class="px-[18px] py-[9px] rounded-[10px] bg-card border border-white/[0.094] text-t2 text-[16px] font-medium hover:text-t1 transition-colors">Browse all listings</button>
+      </div>
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- Near you -->
+  <section class="mb-9">
+    <div class="flex items-baseline justify-between mb-4">
+      <h2 class="text-[1.15rem] font-semibold text-t1">Near you &middot; {{ nearby_area }}</h2>
+      <a href="{% url 'listing_list' %}" class="text-[0.9rem] text-teal hover:underline">See all</a>
+    </div>
+
+    {% if nearby_listings %}
+    <div class="flex flex-col gap-0.5">
+      {% for listing in nearby_listings %}
+      <a href="{% url 'listing_detail' listing.slug %}" class="flex items-center gap-3.5 px-[15px] py-3.5 rounded-lg bg-card border border-white/[0.07] hover:border-white/[0.13] transition-colors" data-cat="{{ listing.category }}">
+        <div class="w-[46px] h-[46px] rounded-[10px] flex items-center justify-center text-[1.3rem] flex-shrink-0
+          {% if listing.category == 'hotel' %}bg-blue-500/25 border border-blue-500/40
+          {% elif listing.category == 'restaurant' %}bg-orange-500/25 border border-orange-500/40
+          {% elif listing.category == 'bukka' %}bg-green-500/25 border border-green-500/40
+          {% elif listing.category == 'bar' %}bg-purple-500/25 border border-purple-500/40
+          {% elif listing.category == 'shop' %}bg-pink-500/25 border border-pink-500/40
+          {% elif listing.category == 'recreation' %}bg-amber/25 border border-amber/40
+          {% else %}bg-card border border-white/[0.07]{% endif %}">
+          {% if listing.category == 'hotel' %}🏨
+          {% elif listing.category == 'restaurant' %}🍽
+          {% elif listing.category == 'bukka' %}🍲
+          {% elif listing.category == 'bar' %}🍺
+          {% elif listing.category == 'shop' %}🛍
+          {% elif listing.category == 'recreation' %}🎯
+          {% else %}📍{% endif %}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="text-[1.02rem] font-semibold text-t1 truncate">{{ listing.name }}</div>
+          <div class="text-[0.88rem] text-t3 mt-0.5">{{ listing.address }}</div>
+        </div>
+        <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+          <span class="text-[0.8rem] text-t3">{{ nearby_area }}</span>
+          {% if listing.is_verified %}
+            {% if listing.is_open_now %}
+              <span class="px-2.5 py-0.5 rounded-full text-[0.75rem] font-semibold bg-teal/15 text-teal border border-teal/30">Open</span>
+            {% else %}
+              <span class="px-2.5 py-0.5 rounded-full text-[0.75rem] font-semibold bg-[rgba(107,112,128,0.12)] text-t3 border border-[rgba(107,112,128,0.2)]">Closed</span>
+            {% endif %}
+          {% else %}
+            <span class="px-2.5 py-0.5 rounded-full text-[0.75rem] font-semibold bg-[rgba(107,112,128,0.12)] text-t3 border border-[rgba(107,112,128,0.2)]">Free listing</span>
+          {% endif %}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-[0.88rem] text-t3 text-center py-8">No listings found nearby yet.</p>
+    {% endif %}
+  </section>
+
+</div>
+
+<!-- Bottom nav -->
+<nav class="fixed bottom-0 left-0 right-0 bg-surface border-t border-white/[0.07] flex z-50 md:hidden" aria-label="Mobile navigation">
+  <a href="{% url 'home' %}" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 border-none bg-transparent text-teal text-[0.7rem] font-medium tracking-[0.3px]">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+    Home
+  </a>
+  <a href="{% url 'search' %}" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 border-none bg-transparent text-t3 text-[0.7rem] font-medium tracking-[0.3px] hover:text-t2 transition-colors">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10" cy="10" r="7"/><line x1="15.5" y1="15.5" x2="21" y2="21"/></svg>
+    Search
+  </a>
+  <button class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 border-none bg-transparent text-t3 text-[0.7rem] font-medium tracking-[0.3px] hover:text-t2 transition-colors">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+    Map
+  </button>
+  <button class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 border-none bg-transparent text-t3 text-[0.7rem] font-medium tracking-[0.3px] hover:text-t2 transition-colors">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Profile
+  </button>
+</nav>
+
+</div>
+{% endblock %}

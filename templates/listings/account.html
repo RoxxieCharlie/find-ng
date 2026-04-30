@@ -1,0 +1,689 @@
+{% extends "base.html" %}
+
+{% block title %}My Account — find.ng{% endblock %}
+
+{% block body %}
+<div class="dash-root">
+
+  <!-- SIDEBAR -->
+  <aside class="dash-sidebar">
+
+    <div class="sid-identity">
+      <div class="sid-avatar">
+        <span>{{ user.full_name|slice:":1"|upper }}</span>
+        <div class="sid-dot"></div>
+      </div>
+      <div class="sid-info">
+        <p class="sid-name">{{ user.full_name }}</p>
+        <p class="sid-phone">{{ user.phone }}</p>
+      </div>
+    </div>
+
+    <div class="sid-stats">
+      <div class="stat-item">
+        <span class="stat-val">{{ reviews_count }}</span>
+        <span class="stat-lbl">Reviews</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-val">{{ claims_count }}</span>
+        <span class="stat-lbl">Claims</span>
+      </div>
+    </div>
+
+    <nav class="sid-nav">
+      <button class="nav-btn active" data-tab="overview">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Overview
+      </button>
+      <button class="nav-btn" data-tab="claims">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+        My claims
+        {% if pending_claims_count %}<span class="nav-badge">{{ pending_claims_count }}</span>{% endif %}
+      </button>
+      <button class="nav-btn" data-tab="reviews">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        My reviews
+      </button>
+    </nav>
+
+    <div class="sid-footer">
+      <a href="{% url 'logout' %}" class="logout-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign out
+      </a>
+    </div>
+
+  </aside>
+
+  <!-- MAIN -->
+  <main class="dash-main">
+
+    <!-- ── OVERVIEW ── -->
+    <div class="tab-panel active" id="tab-overview">
+
+      <div class="panel-header">
+        <h1 class="panel-title">Overview</h1>
+        <p class="panel-sub">Welcome back, {{ user.full_name }}</p>
+      </div>
+
+      {% if latest_claim %}
+      <div class="claim-banner status-{{ latest_claim.status }}">
+        <div class="cb-left">
+          <div class="cb-icon">
+            {% if latest_claim.status == 'pending' %}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            {% elif latest_claim.status == 'approved' %}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            {% else %}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            {% endif %}
+          </div>
+          <div>
+            <p class="cb-label">
+              {% if latest_claim.status == 'pending' %}Claim under review
+              {% elif latest_claim.status == 'approved' %}Claim approved
+              {% else %}Claim rejected{% endif %}
+            </p>
+            <p class="cb-name">{{ latest_claim.listing.name }}</p>
+          </div>
+        </div>
+        <span class="status-pill pill-{{ latest_claim.status }}">{{ latest_claim.status|capfirst }}</span>
+      </div>
+      {% endif %}
+
+      <div class="qa-grid">
+        <a href="{% url 'listing_list' %}" class="qa-card">
+          <div class="qa-icon qi-teal">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <div>
+            <p class="qa-title">Discover</p>
+            <p class="qa-desc">Browse Bonny businesses</p>
+          </div>
+          <svg class="qa-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+        <a href="{% url 'listing_list' %}" class="qa-card">
+          <div class="qa-icon qi-amber">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+          </div>
+          <div>
+            <p class="qa-title">Claim a business</p>
+            <p class="qa-desc">Own a listing on find.ng</p>
+          </div>
+          <svg class="qa-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+
+      <p class="block-label">Recent activity</p>
+
+      {% if recent_activity %}
+      <div class="activity-list">
+        {% for item in recent_activity %}
+        <div class="act-item">
+          <div class="act-dot"></div>
+          <div>
+            <p class="act-text">
+              {% if item.type == 'review' %}
+                You reviewed <a href="{% url 'listing_detail' item.listing.slug %}" class="act-link">{{ item.listing.name }}</a>
+              {% else %}
+                You submitted a claim for <a href="{% url 'listing_detail' item.listing.slug %}" class="act-link">{{ item.listing.name }}</a>
+              {% endif %}
+            </p>
+            <p class="act-meta">
+              {% if item.type == 'review' %}
+                {% for i in "12345" %}{% if forloop.counter <= item.rating %}<span class="sf">★</span>{% else %}<span class="se">★</span>{% endif %}{% endfor %} ·
+              {% endif %}
+              {{ item.created_at|timesince }} ago
+            </p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <p class="empty-text">No activity yet. Start by exploring businesses around Bonny.</p>
+        <a href="{% url 'listing_list' %}" class="empty-cta">Browse listings →</a>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- ── CLAIMS ── -->
+    <div class="tab-panel" id="tab-claims">
+
+      <div class="panel-header">
+        <h1 class="panel-title">My claims</h1>
+        <p class="panel-sub">Track your business ownership requests</p>
+      </div>
+
+      {% if user_claims %}
+      <div class="claims-list">
+        {% for claim in user_claims %}
+        <div class="claim-row">
+          <div class="claim-thumb">
+            {% if claim.listing.primary_photo %}
+              <img src="{{ claim.listing.primary_photo.url }}" alt="{{ claim.listing.name }}" loading="lazy">
+            {% else %}
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6b7080" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            {% endif %}
+          </div>
+          <div class="claim-info">
+            <p class="claim-biz">{{ claim.listing.name }}</p>
+            <p class="claim-area">{{ claim.listing.area }} · {{ claim.listing.category }}</p>
+            <p class="claim-date">Submitted {{ claim.claimed_at|date:"d M Y" }}</p>
+            {% if claim.status == 'rejected' and claim.admin_note %}
+              <p class="claim-reason">{{ claim.admin_note }}</p>
+            {% endif %}
+          </div>
+          <span class="status-pill pill-{{ claim.status }}">{{ claim.status|capfirst }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#6b7080" stroke-width="1.3"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+        <p class="empty-text">You haven't claimed any businesses yet.</p>
+        <a href="{% url 'listing_list' %}" class="empty-cta">Find your business →</a>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- ── REVIEWS ── -->
+    <div class="tab-panel" id="tab-reviews">
+
+      <div class="panel-header">
+        <h1 class="panel-title">My reviews</h1>
+        <p class="panel-sub">{{ reviews_count }} review{{ reviews_count|pluralize }} written</p>
+      </div>
+
+      {% if user_reviews %}
+      <div class="reviews-list">
+        {% for review in user_reviews %}
+        <div class="review-card">
+          <div class="rv-top">
+            <div>
+              <a href="{% url 'listing_detail' review.listing.slug %}" class="rv-biz">{{ review.listing.name }}</a>
+              <p class="rv-area">{{ review.listing.area }} · {{ review.listing.category }}</p>
+            </div>
+            <div class="rv-right">
+              <div class="rv-stars">
+                {% for i in "12345" %}{% if forloop.counter <= review.rating %}<span class="sf">★</span>{% else %}<span class="se">★</span>{% endif %}{% endfor %}
+              </div>
+              <p class="rv-date">{{ review.created_at|date:"d M Y" }}</p>
+            </div>
+          </div>
+          {% if review.body %}
+          <p class="rv-body">{{ review.body }}</p>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#6b7080" stroke-width="1.3"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <p class="empty-text">You haven't written any reviews yet.</p>
+        <a href="{% url 'listing_list' %}" class="empty-cta">Explore businesses →</a>
+      </div>
+      {% endif %}
+
+    </div>
+
+  </main>
+</div>
+
+<style>
+.dash-root {
+  display: flex;
+  min-height: 100vh;
+  background: #0d0f18;
+}
+
+/* ── Sidebar ── */
+.dash-sidebar {
+  width: 240px;
+  min-width: 240px;
+  background: #13151f;
+  border-right: 1px solid rgba(255,255,255,.06);
+  display: flex;
+  flex-direction: column;
+  padding: 28px 0 22px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sid-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px 22px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.sid-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1D9E75, #0e6b4e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.sid-dot {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #1D9E75;
+  border: 2px solid #13151f;
+}
+
+.sid-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #e8e2d6;
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sid-phone {
+  font-size: 11.5px;
+  color: #6b7080;
+  margin: 0;
+}
+
+.sid-stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 16px 14px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.stat-item { text-align: center; }
+
+.stat-val {
+  display: block;
+  font-size: 19px;
+  font-weight: 700;
+  color: #e8e2d6;
+  line-height: 1;
+}
+
+.stat-lbl {
+  display: block;
+  font-size: 10px;
+  color: #6b7080;
+  margin-top: 3px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 28px;
+  background: rgba(255,255,255,.07);
+}
+
+.sid-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 10px;
+  flex: 1;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #9fa3b0;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background .15s, color .15s;
+  width: 100%;
+}
+
+.nav-btn:hover {
+  background: rgba(255,255,255,.04);
+  color: #e8e2d6;
+}
+
+.nav-btn.active {
+  background: rgba(29,158,117,.12);
+  color: #1D9E75;
+}
+
+.nav-badge {
+  margin-left: auto;
+  background: #1D9E75;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  line-height: 1.6;
+}
+
+.sid-footer {
+  padding: 14px 10px 0;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+
+.logout-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #6b7080;
+  font-size: 13px;
+  text-decoration: none;
+  transition: background .15s, color .15s;
+}
+
+.logout-link:hover {
+  background: rgba(220,70,70,.07);
+  color: #e86060;
+}
+
+/* ── Main ── */
+.dash-main {
+  flex: 1;
+  padding: 36px 40px 60px;
+  max-width: 820px;
+}
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+.panel-header { margin-bottom: 24px; }
+
+.panel-title {
+  font-size: 21px;
+  font-weight: 700;
+  color: #e8e2d6;
+  margin: 0 0 4px;
+}
+
+.panel-sub {
+  font-size: 13px;
+  color: #6b7080;
+  margin: 0;
+}
+
+/* ── Claim banner ── */
+.claim-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  margin-bottom: 20px;
+}
+
+.claim-banner.status-pending  { background: rgba(239,159,39,.07);  border-color: rgba(239,159,39,.18); }
+.claim-banner.status-approved { background: rgba(29,158,117,.07);  border-color: rgba(29,158,117,.18); }
+.claim-banner.status-rejected { background: rgba(220,70,70,.07);   border-color: rgba(220,70,70,.18);  }
+
+.cb-left { display: flex; align-items: center; gap: 12px; }
+
+.cb-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.status-pending  .cb-icon { background: rgba(239,159,39,.15); color: #EF9F27; }
+.status-approved .cb-icon { background: rgba(29,158,117,.15); color: #1D9E75; }
+.status-rejected .cb-icon { background: rgba(220,70,70,.15);  color: #dc4646; }
+
+.cb-label { font-size: 11px; color: #9fa3b0; margin: 0 0 2px; }
+.cb-name  { font-size: 13.5px; font-weight: 600; color: #e8e2d6; margin: 0; }
+
+/* ── Pills / badges ── */
+.status-pill {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+
+.pill-pending  { background: rgba(239,159,39,.14); color: #EF9F27; }
+.pill-approved { background: rgba(29,158,117,.14); color: #1D9E75; }
+.pill-rejected { background: rgba(220,70,70,.14);  color: #dc4646; }
+
+/* ── Quick actions ── */
+.qa-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.qa-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #1e2130;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px;
+  padding: 16px 18px;
+  text-decoration: none;
+  transition: border-color .2s, transform .2s;
+}
+
+.qa-card:hover {
+  border-color: rgba(29,158,117,.3);
+  transform: translateY(-2px);
+}
+
+.qa-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.qi-teal  { background: rgba(29,158,117,.12); color: #1D9E75; }
+.qi-amber { background: rgba(239,159,39,.12); color: #EF9F27; }
+
+.qa-title { font-size: 13px; font-weight: 600; color: #e8e2d6; margin: 0 0 2px; }
+.qa-desc  { font-size: 11.5px; color: #6b7080; margin: 0; }
+.qa-arrow { margin-left: auto; color: #6b7080; flex-shrink: 0; }
+
+/* ── Activity ── */
+.block-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #9fa3b0;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin: 0 0 14px;
+}
+
+.activity-list { display: flex; flex-direction: column; }
+
+.act-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+
+.act-item:last-child { border-bottom: none; }
+
+.act-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #1D9E75;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+
+.act-text { font-size: 13.5px; color: #e8e2d6; margin: 0 0 4px; }
+.act-link { color: #1D9E75; text-decoration: none; }
+.act-link:hover { text-decoration: underline; }
+.act-meta { font-size: 11.5px; color: #6b7080; margin: 0; }
+
+/* ── Stars ── */
+.sf { color: #EF9F27; font-size: 12px; }
+.se { color: #2e3247; font-size: 12px; }
+
+/* ── Empty state ── */
+.empty-state {
+  text-align: center;
+  padding: 56px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.empty-text { font-size: 14px; color: #6b7080; margin: 0; }
+.empty-cta  { font-size: 13.5px; color: #1D9E75; text-decoration: none; font-weight: 500; }
+.empty-cta:hover { text-decoration: underline; }
+
+/* ── Claims list ── */
+.claims-list { display: flex; flex-direction: column; gap: 10px; }
+
+.claim-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #1e2130;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.claim-thumb {
+  width: 54px;
+  height: 54px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #0d0f18;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.claim-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+.claim-info { flex: 1; min-width: 0; }
+.claim-biz  { font-size: 13.5px; font-weight: 600; color: #e8e2d6; margin: 0 0 2px; }
+.claim-area { font-size: 12px; color: #9fa3b0; margin: 0 0 2px; text-transform: capitalize; }
+.claim-date { font-size: 11px; color: #6b7080; margin: 0; }
+
+.claim-reason {
+  font-size: 11.5px;
+  color: #dc4646;
+  margin: 4px 0 0;
+}
+
+/* ── Reviews list ── */
+.reviews-list { display: flex; flex-direction: column; gap: 12px; }
+
+.review-card {
+  background: #1e2130;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px;
+  padding: 16px 20px;
+}
+
+.rv-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.rv-biz  { font-size: 14px; font-weight: 600; color: #e8e2d6; text-decoration: none; display: block; margin-bottom: 2px; }
+.rv-biz:hover { color: #1D9E75; }
+.rv-area { font-size: 12px; color: #6b7080; margin: 0; text-transform: capitalize; }
+
+.rv-right  { text-align: right; flex-shrink: 0; }
+.rv-stars  { display: flex; gap: 2px; justify-content: flex-end; }
+.rv-date   { font-size: 11px; color: #6b7080; margin: 4px 0 0; }
+.rv-body   { font-size: 13.5px; color: #9fa3b0; margin: 0; line-height: 1.65; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .dash-root { flex-direction: column; }
+
+  .dash-sidebar {
+    width: 100%;
+    min-width: 0;
+    position: static;
+    height: auto;
+    padding: 20px 0 0;
+    border-right: none;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+
+  .sid-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 8px 12px 14px;
+    gap: 4px;
+  }
+
+  .nav-btn { white-space: nowrap; }
+  .sid-footer { display: none; }
+  .dash-main { padding: 24px 16px 48px; }
+  .qa-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<script>
+(function () {
+  const buttons = document.querySelectorAll('.nav-btn[data-tab]');
+  const panels  = document.querySelectorAll('.tab-panel');
+
+  function activate(tabId) {
+    buttons.forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
+    panels.forEach(p  => p.classList.toggle('active', p.id === 'tab-' + tabId));
+    history.replaceState(null, '', '#' + tabId);
+  }
+
+  buttons.forEach(btn => btn.addEventListener('click', () => activate(btn.dataset.tab)));
+
+  const hash = location.hash.replace('#', '');
+  if (hash && document.getElementById('tab-' + hash)) activate(hash);
+})();
+</script>
+
+{% endblock %}
