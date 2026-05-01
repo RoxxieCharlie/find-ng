@@ -83,15 +83,19 @@
   <div class="max-w-[860px] mx-auto px-5">
     <div class="flex items-start justify-between gap-2.5 mb-2 flex-wrap">
       <h1 class="text-[clamp(1.35rem,3vw,1.75rem)] font-bold text-t1 leading-tight flex-1">{{ listing.name }}</h1>
-    {% if listing.is_open_now %}
-      <span class="rounded-[7px] px-2.5 py-[3px] text-[13px] bg-teal-dark border border-teal/80 text-teal flex-shrink-0">
-      Open{% if today_hours and today_hours.close_time %} · Closes {{ today_hours.close_time|time:"g:i A" }}{% endif %}
-      </span>
-    {% else %}
-  <span class="rounded-[7px] px-2.5 py-[3px] text-[13px] bg-[#200808] border border-[#E24B4A]/80 text-[#E24B4A] flex-shrink-0">
-    Closed{% if today_hours and today_hours.open_time %} · Opens {{ today_hours.open_time|time:"g:i A" }}{% endif %}
-  </span>
-{% endif %}
+    <div class="flex items-center gap-2 flex-shrink-0">
+  {% if listing.is_open_now %}
+    <span class="rounded-[7px] px-2.5 py-[3px] text-[13px] bg-teal-dark border border-teal/80 text-teal">Open</span>
+    {% if today_hours and today_hours.close_time %}
+      <span class="text-[12px] text-t3">Closes {{ today_hours.close_time|time:"g:i A" }}</span>
+    {% endif %}
+  {% else %}
+    <span class="rounded-[7px] px-2.5 py-[3px] text-[13px] bg-[#200808] border border-[#E24B4A]/80 text-[#E24B4A]">Closed</span>
+    {% if today_hours and today_hours.open_time %}
+      <span class="text-[12px] text-t3">Opens {{ today_hours.open_time|time:"g:i A" }}</span>
+    {% endif %}
+  {% endif %}
+</div>
     </div>
     {% if listing.avg_rating %}
     <div class="flex items-center gap-1.5 mb-2">
