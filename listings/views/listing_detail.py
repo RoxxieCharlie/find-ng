@@ -24,6 +24,7 @@ def listing_detail(request, slug):
 
     today_key    = _DAY_NOW[timezone.localtime().weekday()]
     hours_sorted = sorted(listing.hours.all(), key=lambda h: _DAY_ORDER.get(h.day, 7))
+    today_hours  = next((h for h in hours_sorted if h.day == today_key), None)
     cover_photo  = (
         listing.photos.filter(photo_type='exterior').first()
         or listing.photos.first()
@@ -49,6 +50,7 @@ def listing_detail(request, slug):
         'photos':        listing.photos.all(),
         'hours_sorted':  hours_sorted,
         'today_key':     today_key,
+        'today_hours':   today_hours,
         'reviews':       reviews,
         'user_review':   user_review,
         'is_food':       listing.category in ('restaurant', 'bukka', 'bar'),
