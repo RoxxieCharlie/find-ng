@@ -200,8 +200,8 @@
           <span class="text-[0.95rem] font-medium text-t1">{{ item.item_name }}</span>
           {% if item.description %}<span class="text-[0.8rem] text-t3">{{ item.description }}</span>{% endif %}
         </div>
-        {% if item.price %}
-        <span class="text-[0.95rem] font-semibold text-teal flex-shrink-0 ml-3">₦{{ item.price|floatformat:0 }}</span>
+        {% if item.price_display %}
+        <span class="text-[0.95rem] font-semibold text-teal flex-shrink-0 ml-3">{{ item.price_display }}</span>
         {% endif %}
       </div>
       {% endfor %}
@@ -246,8 +246,8 @@
       {% for act in listing.activities.all %}
       <div class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-card border border-white/[0.07]">
         <span class="text-[0.95rem] font-medium text-t1">{{ act.name }}</span>
-        {% if act.price %}
-        <span class="text-[0.95rem] font-semibold text-teal flex-shrink-0 ml-3">₦{{ act.price|floatformat:0 }}</span>
+        {% if act.price_display %}
+        <span class="text-[0.95rem] font-semibold text-teal flex-shrink-0 ml-3">{{ act.price_display }}</span>
         {% endif %}
       </div>
       {% endfor %}

@@ -38,8 +38,8 @@ class UserAdmin(BaseUserAdmin):
 # ── Inlines ───────────────────────────────────────────────────────────────────
 
 class OperatingHoursInline(admin.TabularInline):
-    model   = OperatingHours
-    extra   = 7
+    model    = OperatingHours
+    extra    = 7
     ordering = ['day']
 
 
@@ -52,7 +52,7 @@ class PhotoInline(admin.TabularInline):
 class MenuItemInline(admin.TabularInline):
     model  = MenuItem
     extra  = 1
-    fields = ('item_name', 'description', 'price', 'price_updated_at')
+    fields = ('item_name', 'description', 'price_min', 'price_max', 'price_updated_at')
 
 
 class RoomTypeInline(admin.TabularInline):
@@ -66,6 +66,7 @@ class AmenityInline(admin.TabularInline):
     extra  = 1
     fields = ('name',)
 
+
 class ServiceInline(admin.TabularInline):
     model  = Service
     extra  = 1
@@ -75,7 +76,7 @@ class ServiceInline(admin.TabularInline):
 class ActivityInline(admin.TabularInline):
     model  = Activity
     extra  = 1
-    fields = ('name', 'price', 'price_updated_at')
+    fields = ('name', 'price_min', 'price_max', 'price_updated_at')
 
 
 class ProductInline(admin.TabularInline):
@@ -105,13 +106,13 @@ class FacilityPhotoInline(admin.TabularInline):
 class FacilityMenuItemInline(admin.TabularInline):
     model  = MenuItem
     extra  = 1
-    fields = ('item_name', 'description', 'price', 'price_updated_at')
+    fields = ('item_name', 'description', 'price_min', 'price_max', 'price_updated_at')
 
 
 class FacilityActivityInline(admin.TabularInline):
     model  = Activity
     extra  = 1
-    fields = ('name', 'price', 'price_updated_at')
+    fields = ('name', 'price_min', 'price_max', 'price_updated_at')
 
 
 # ── Model admins ──────────────────────────────────────────────────────────────
@@ -130,7 +131,7 @@ class ListingAdmin(admin.ModelAdmin):
         ('Basic info',  {'fields': ('name', 'slug', 'category', 'description')}),
         ('Location',    {'fields': ('address', 'landmark')}),
         ('Contact',     {'fields': ('phone1', 'phone2', 'website')}),
-        ('Pricing',     {'fields': ('price',)}),
+        ('Pricing',     {'fields': ('price_min', 'price_max')}),
         ('Services',    {'fields': ('accepted_payments',)}),
         ('Media',       {'fields': ('youtube_url',)}),
         ('Hotel only',  {'classes': ('collapse',), 'fields': ('checkin_time', 'checkout_time')}),
@@ -194,5 +195,3 @@ class ServiceAdmin(admin.ModelAdmin):
     list_display  = ('name', 'listing')
     search_fields = ('name', 'listing__name')
     ordering      = ('listing', 'name')
-
-    

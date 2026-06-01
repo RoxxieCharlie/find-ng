@@ -81,18 +81,18 @@ class PaymentMethod(models.Model):
 
 class Listing(models.Model):
     CATEGORY_CHOICES = [
-    ('hotel',         'Hotel'),
-    ('restaurant',    'Restaurant'),
-    ('bukka',         'Bukka'),
-    ('bar',           'Bar'),
-    ('shop',          'Shop'),
-    ('recreation',    'Recreational Places'),
-    ('hair_salon',    'Hair Salon'),
-    ('barbing_salon', 'Barbing Salon'),
-    ('pharmacy',      'Pharmacy'),
-    ('local_market',  'Local Market'),
-    ('supermarket',   'Supermarket'),
-]
+        ('hotel',         'Hotel'),
+        ('restaurant',    'Restaurant'),
+        ('bukka',         'Bukka'),
+        ('bar',           'Bar'),
+        ('shop',          'Shop'),
+        ('recreation',    'Recreational Places'),
+        ('hair_salon',    'Hair Salon'),
+        ('barbing_salon', 'Barbing Salon'),
+        ('pharmacy',      'Pharmacy'),
+        ('local_market',  'Local Market'),
+        ('supermarket',   'Supermarket'),
+    ]
     name              = models.CharField(max_length=200)
     slug              = models.SlugField(max_length=200, unique=True, blank=True)
     category          = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
@@ -100,9 +100,10 @@ class Listing(models.Model):
     landmark          = models.CharField(max_length=300, blank=True)
     phone1            = models.CharField(max_length=20)
     phone2            = models.CharField(max_length=20, blank=True)
-    website = models.URLField(max_length=200, blank=True)
+    website           = models.URLField(max_length=200, blank=True)
     description       = models.TextField(blank=True)
-    price             = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    price_min         = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text='Starting price or single price')
+    price_max         = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text='Upper price (leave blank for single price)')
     checkin_time      = models.TimeField(null=True, blank=True, help_text='Hotels only')
     checkout_time     = models.TimeField(null=True, blank=True, help_text='Hotels only')
     accepted_payments = models.ManyToManyField(PaymentMethod, blank=True)
@@ -111,6 +112,21 @@ class Listing(models.Model):
     is_active         = models.BooleanField(default=True)
     created_at        = models.DateTimeField(auto_now_add=True)
     updated_at        = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        if self.price_max is not None and self.price_min is None:
+            raise ValidationError({'price_max': 'Cannot set a max price without a min price.'})
+        if self.price_min is not None and self.price_max is not None:
+            if self.price_max < self.price_min:
+                raise ValidationError({'price_max': 'Max price cannot be less than min price.'})
+
+    @property
+    def price_display(self):
+        if self.price_min is not None and self.price_max is not None:
+            return f"₦{self.price_min:,.0f} – ₦{self.price_max:,.0f}"
+        elif self.price_min is not None:
+            return f"₦{self.price_min:,.0f}"
+        return None
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -148,7 +164,6 @@ class Listing(models.Model):
         return self.claims.filter(user=user).first()
 
     def get_youtube_embed_url(self):
-        """Convert YouTube watch URL to embed URL."""
         if not self.youtube_url:
             return None
         url = self.youtube_url
@@ -246,7 +261,6 @@ class Photo(models.Model):
             raise ValidationError('A YouTube URL is required for media type "video".')
 
     def get_youtube_embed_url(self):
-        """Convert YouTube watch URL to embed URL."""
         if not self.video_url:
             return None
         url = self.video_url
@@ -262,7 +276,6 @@ class Photo(models.Model):
         return None
 
     def get_youtube_thumbnail(self):
-        """Get YouTube thumbnail URL for gallery grid display."""
         embed_url = self.get_youtube_embed_url()
         if embed_url:
             video_id = embed_url.split('/embed/')[-1]
@@ -284,7 +297,8 @@ class MenuItem(models.Model):
     facility         = models.ForeignKey(HotelFacility, on_delete=models.CASCADE, related_name='menu_items', null=True, blank=True)
     item_name        = models.CharField(max_length=150)
     description      = models.TextField(max_length=300, blank=True)
-    price            = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    price_min        = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text='Starting price or single price')
+    price_max        = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text='Upper price (leave blank for single price)')
     price_updated_at = models.DateTimeField(null=True, blank=True)
 
     def clean(self):
@@ -292,6 +306,19 @@ class MenuItem(models.Model):
             raise ValidationError('Menu item can belong to a listing or facility, not both.')
         if not self.listing and not self.facility:
             raise ValidationError('Menu item must belong to a listing or facility.')
+        if self.price_max is not None and self.price_min is None:
+            raise ValidationError({'price_max': 'Cannot set a max price without a min price.'})
+        if self.price_min is not None and self.price_max is not None:
+            if self.price_max < self.price_min:
+                raise ValidationError({'price_max': 'Max price cannot be less than min price.'})
+
+    @property
+    def price_display(self):
+        if self.price_min is not None and self.price_max is not None:
+            return f"₦{self.price_min:,.0f} – ₦{self.price_max:,.0f}"
+        elif self.price_min is not None:
+            return f"₦{self.price_min:,.0f}"
+        return None
 
     def __str__(self):
         return f"{self.item_name} — {self.listing or self.facility}"
@@ -335,12 +362,26 @@ class Activity(models.Model):
     listing          = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='activities')
     facility         = models.ForeignKey(HotelFacility, on_delete=models.CASCADE, related_name='activities', null=True, blank=True)
     name             = models.CharField(max_length=150)
-    price            = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    price_min        = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text='Starting price or single price')
+    price_max        = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text='Upper price (leave blank for single price)')
     price_updated_at = models.DateTimeField(null=True, blank=True)
 
     def clean(self):
         if self.facility and self.facility.listing != self.listing:
             raise ValidationError("Activity's facility must belong to the same listing.")
+        if self.price_max is not None and self.price_min is None:
+            raise ValidationError({'price_max': 'Cannot set a max price without a min price.'})
+        if self.price_min is not None and self.price_max is not None:
+            if self.price_max < self.price_min:
+                raise ValidationError({'price_max': 'Max price cannot be less than min price.'})
+
+    @property
+    def price_display(self):
+        if self.price_min is not None and self.price_max is not None:
+            return f"₦{self.price_min:,.0f} – ₦{self.price_max:,.0f}"
+        elif self.price_min is not None:
+            return f"₦{self.price_min:,.0f}"
+        return None
 
     def __str__(self):
         return f"{self.name} — {self.facility or self.listing}"
@@ -443,7 +484,7 @@ class Review(models.Model):
         verbose_name_plural = 'Reviews'
         ordering            = ['-created_at']
 
-#Service
+
 class Service(models.Model):
     listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='services')
     name    = models.CharField(max_length=150)
