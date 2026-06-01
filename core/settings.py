@@ -1,8 +1,7 @@
 from pathlib import Path
 from decouple import config
 import os
-from urllib.parse import urlparse
-import sys
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -59,27 +58,15 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # ── DATABASE ───────────────────────────────────────────────────
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
-# TEMPORARY DEBUG - remove after fix
-print(f"DEBUG DATABASE_URL VALUE: '{DATABASE_URL}'", file=sys.stderr)
-
 if DATABASE_URL:
-    db = urlparse(DATABASE_URL)
-    print(f"DEBUG PARSED - host: '{db.hostname}' name: '{db.path}' user: '{db.username}'", file=sys.stderr)
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': db.path[1:],
-            'USER': db.username,
-            'PASSWORD': db.password,
-            'HOST': db.hostname,
-            'PORT': db.port or 5432,
-            'OPTIONS': {
-                'sslmode': 'require',
-            },
-        }
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True,
+        )
     }
 else:
-    print("DEBUG: DATABASE_URL is empty, falling back to SQLite", file=sys.stderr)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
