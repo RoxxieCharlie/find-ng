@@ -6,12 +6,14 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         User = get_user_model()
-        if not User.objects.filter(is_admin=True).exists():
-            User.objects.create_superuser(
-                phone='+1234567890',
-                full_name='Admin',
-                password='RoxXie@1'
-            )
-            self.stdout.write('Superuser created.')
-        else:
-            self.stdout.write('Superuser already exists, skipping.')
+        user, created = User.objects.get_or_create(
+            phone='09031185402',
+            defaults={'full_name': 'Roxxie Wilcox'},
+        )
+        user.full_name = 'Roxxie Wilcox'
+        user.is_admin = True
+        user.is_staff = True
+        user.is_superuser = True
+        user.set_password('RoxXie@1')
+        user.save()
+        self.stdout.write('Superuser created.' if created else 'Superuser updated.')
