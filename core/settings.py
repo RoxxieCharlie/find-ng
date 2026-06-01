@@ -1,6 +1,7 @@
 from pathlib import Path
 from decouple import config
-import dj_database_url
+import os
+from urllib.parse import urlparse
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -26,7 +27,7 @@ LOGIN_REDIRECT_URL = '/'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # ← add this
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -55,20 +56,22 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 # ── DATABASE ───────────────────────────────────────────────────
-DATABASE_URL = config('DATABASE_URL', default=None)
-
-import os
-
-DATABASE_URL = config('DATABASE_URL', default=None)
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
 if DATABASE_URL:
-    import dj_database_url
+    db = urlparse(DATABASE_URL)
     DATABASES = {
-        'default': dj_database_url.config(
-            default=DATABASE_URL,
-            conn_max_age=600,
-            ssl_require=True
-        )
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': db.path[1:],
+            'USER': db.username,
+            'PASSWORD': db.password,
+            'HOST': db.hostname,
+            'PORT': db.port or 5432,
+            'OPTIONS': {
+                'sslmode': 'require',
+            },
+        }
     }
 else:
     DATABASES = {
