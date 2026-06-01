@@ -1,7 +1,6 @@
 from pathlib import Path
 from decouple import config
 import os
-import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -56,16 +55,43 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 # ── DATABASE ───────────────────────────────────────────────────
+def _parse_db_url(url):
+    # Split on the LAST @ so passwords containing @ are handled correctly.
+    for scheme in ('postgresql://', 'postgres://'):
+        if url.startswith(scheme):
+            rest = url[len(scheme):]
+            break
+    else:
+        return None
+    last_at = rest.rfind('@')
+    if last_at == -1:
+        return None
+    credentials, host_part = rest[:last_at], rest[last_at + 1:]
+    colon = credentials.find(':')
+    user = credentials[:colon]
+    password = credentials[colon + 1:]
+    slash = host_part.find('/')
+    host_port = host_part[:slash]
+    dbname = host_part[slash + 1:]
+    if ':' in host_port:
+        host, port = host_port.rsplit(':', 1)
+        port = int(port)
+    else:
+        host, port = host_port, 5432
+    return {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': dbname,
+        'USER': user,
+        'PASSWORD': password,
+        'HOST': host,
+        'PORT': port,
+        'OPTIONS': {'sslmode': 'require'},
+    }
+
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 if DATABASE_URL:
-    DATABASES = {
-        'default': dj_database_url.parse(
-            DATABASE_URL,
-            conn_max_age=600,
-            ssl_require=True,
-        )
-    }
+    DATABASES = {'default': _parse_db_url(DATABASE_URL)}
 else:
     DATABASES = {
         'default': {
