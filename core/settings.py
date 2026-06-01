@@ -2,6 +2,7 @@ from pathlib import Path
 from decouple import config
 import os
 from urllib.parse import urlparse
+import sys
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -58,8 +59,12 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # ── DATABASE ───────────────────────────────────────────────────
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
+# TEMPORARY DEBUG - remove after fix
+print(f"DEBUG DATABASE_URL VALUE: '{DATABASE_URL}'", file=sys.stderr)
+
 if DATABASE_URL:
     db = urlparse(DATABASE_URL)
+    print(f"DEBUG PARSED - host: '{db.hostname}' name: '{db.path}' user: '{db.username}'", file=sys.stderr)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -74,6 +79,7 @@ if DATABASE_URL:
         }
     }
 else:
+    print("DEBUG: DATABASE_URL is empty, falling back to SQLite", file=sys.stderr)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
